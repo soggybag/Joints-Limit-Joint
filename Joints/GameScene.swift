@@ -13,13 +13,62 @@ class GameScene: SKScene {
     
     var boxA: SKSpriteNode!
     var boxB: SKSpriteNode!
-    var rope: SKPhysicsJointLimit!
-    var line: SKShapeNode!
+    
+    
+    
+    
+    func createChain() {
+        var pos = boxA.position
+        pos.x += 10
+        var links = [SKSpriteNode]()
+        
+        for i in 0..<10 {
+            let color = UIColor(hue: 0, saturation: 1, brightness: 1, alpha: 0.3)
+            let linkSize = CGSize(width: 20, height: 8)
+            let link = SKSpriteNode(color: color, size: linkSize)
+            link.physicsBody = SKPhysicsBody(rectangleOfSize: linkSize)
+            link.physicsBody?.categoryBitMask = 0
+            link.physicsBody?.collisionBitMask = 0
+            
+            addChild(link)
+            link.position = pos
+            pos.x += 20
+            
+            links.append(link)
+        }
+        
+        for i in 0..<links.count {
+            if i == 0 {
+                let pin = SKPhysicsJointPin.jointWithBodyA(boxA.physicsBody!,
+                                                           bodyB: links[i].physicsBody!,
+                                                           anchor: boxA.position)
+                physicsWorld.addJoint(pin)
+                
+            } else {
+                var anchor = links[i].position
+                anchor.x -= 10
+                let pin = SKPhysicsJointPin.jointWithBodyA(links[i - 1].physicsBody!,
+                                                           bodyB: links[i].physicsBody!,
+                                                           anchor: anchor)
+                physicsWorld.addJoint(pin)
+            }
+        }
+        
+        let pin = SKPhysicsJointPin.jointWithBodyA(boxB.physicsBody!,
+                                                   bodyB: links.last!.physicsBody!,
+                                                   anchor: boxB.position)
+        physicsWorld.addJoint(pin)
+        
+    }
+    
+    
     
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
         
         physicsBody = SKPhysicsBody(edgeLoopFromRect: view.frame)
+        physicsBody?.categoryBitMask = 1
+        physicsBody?.collisionBitMask = 1
         
         let boxSize = CGSize(width: 60, height: 60)
         boxA = SKSpriteNode(color: UIColor.orangeColor(), size: boxSize)
@@ -37,19 +86,17 @@ class GameScene: SKScene {
         boxA.physicsBody = SKPhysicsBody(rectangleOfSize: boxSize)
         boxB.physicsBody = SKPhysicsBody(rectangleOfSize: boxSize)
         
+        boxA.physicsBody?.categoryBitMask = 1
+        boxA.physicsBody?.collisionBitMask = 1
+        
+        boxB.physicsBody?.categoryBitMask = 1
+        boxB.physicsBody?.collisionBitMask = 1
+        
         boxA.name = "box"
         boxB.name = "box"
-    
-        // Mark: Create Limit
-        rope = SKPhysicsJointLimit.jointWithBodyA(boxA.physicsBody!,
-            bodyB: boxB.physicsBody!,
-            anchorA: boxA.position,
-            anchorB: boxB.position)
         
-        physicsWorld.addJoint(rope)
+        createChain()
         
-        line = SKShapeNode()
-        addChild(line)
     }
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
@@ -70,12 +117,7 @@ class GameScene: SKScene {
     override func update(currentTime: CFTimeInterval) {
         /* Called before each frame is rendered */
         
-        let path = UIBezierPath()
-        path.moveToPoint(boxA.position)
-        path.addLineToPoint(boxB.position)
-        line.path = path.CGPath
-        line.lineWidth = 2
-        line.strokeColor = UIColor.whiteColor()
+        
     }
 }
 
