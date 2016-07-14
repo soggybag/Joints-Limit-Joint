@@ -6,7 +6,29 @@
 //  Copyright (c) 2016 mitchell hudson. All rights reserved.
 //
 
+
+
+/*
+ 
+This example sets up a set up chan links using pin joints.
+ 
+Tapping a box will throw it in the air. Note tapping a chain link will 
+ do nothing. The two boxes will stay connected via a series of smaller 
+ rectangles that act as a chain. 
+ 
+*/
+
+
+
 import SpriteKit
+
+
+struct PhysicsCategory {
+    static let None: UInt32 =   0
+    static let Box: UInt32 =    0b1
+    static let Chain: UInt32 =  0b10
+    static let Edge: UInt32 =   0b100
+}
 
 
 class GameScene: SKScene {
@@ -27,8 +49,11 @@ class GameScene: SKScene {
             let linkSize = CGSize(width: 20, height: 8)
             let link = SKSpriteNode(color: color, size: linkSize)
             link.physicsBody = SKPhysicsBody(rectangleOfSize: linkSize)
-            link.physicsBody?.categoryBitMask = 0
-            link.physicsBody?.collisionBitMask = 0
+            
+            link.physicsBody?.linearDamping = 0.2
+            
+            link.physicsBody?.categoryBitMask = PhysicsCategory.Chain
+            link.physicsBody?.collisionBitMask = PhysicsCategory.Edge
             
             addChild(link)
             link.position = pos
@@ -66,9 +91,12 @@ class GameScene: SKScene {
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
         
+        physicsWorld.gravity = CGVector(dx: 0, dy: -5)
+        
+        
         physicsBody = SKPhysicsBody(edgeLoopFromRect: view.frame)
-        physicsBody?.categoryBitMask = 1
-        physicsBody?.collisionBitMask = 1
+        physicsBody?.categoryBitMask = PhysicsCategory.Edge
+        physicsBody?.collisionBitMask = PhysicsCategory.Chain
         
         let boxSize = CGSize(width: 60, height: 60)
         boxA = SKSpriteNode(color: UIColor.orangeColor(), size: boxSize)
@@ -86,11 +114,14 @@ class GameScene: SKScene {
         boxA.physicsBody = SKPhysicsBody(rectangleOfSize: boxSize)
         boxB.physicsBody = SKPhysicsBody(rectangleOfSize: boxSize)
         
-        boxA.physicsBody?.categoryBitMask = 1
-        boxA.physicsBody?.collisionBitMask = 1
+        boxA.physicsBody?.linearDamping = 0.2
+        boxB.physicsBody?.linearDamping = 0.2
         
-        boxB.physicsBody?.categoryBitMask = 1
-        boxB.physicsBody?.collisionBitMask = 1
+        boxA.physicsBody?.categoryBitMask = PhysicsCategory.Box
+        boxA.physicsBody?.collisionBitMask = PhysicsCategory.Box | PhysicsCategory.Edge
+        
+        boxB.physicsBody?.categoryBitMask = PhysicsCategory.Box
+        boxB.physicsBody?.collisionBitMask = PhysicsCategory.Box | PhysicsCategory.Edge
         
         boxA.name = "box"
         boxB.name = "box"
