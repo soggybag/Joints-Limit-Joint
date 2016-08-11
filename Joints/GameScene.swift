@@ -10,13 +10,17 @@
 
 /*
  
+<<<<<<< HEAD
+ This example sets up a set up chain links using pin joints.
+=======
 This example sets up a set up chain links using pin joints.
+>>>>>>> origin/master
  
-Tapping a box will throw it in the air. Note tapping a chain link will 
- do nothing. The two boxes will stay connected via a series of smaller 
- rectangles that act as a chain. 
+ Tapping a box will throw it in the air. Note tapping a chain link will
+ do nothing. The two boxes will stay connected via a series of smaller
+ rectangles that act as a chain.
  
-*/
+ */
 
 
 
@@ -35,14 +39,17 @@ class GameScene: SKScene {
     
     var boxA: SKSpriteNode!
     var boxB: SKSpriteNode!
+    var links = [SKSpriteNode]()
+    var pinJoints = [SKPhysicsJointPin]()
+    var locked = true
     
-    
-    
+    var addChainButton = SKSpriteNode(color: UIColor.redColor(), size: CGSize(width: 40, height: 40))
+    var removeChainButton = SKSpriteNode(color: UIColor.greenColor(), size:  CGSize(width: 40, height: 40))
     
     func createChain() {
         var pos = boxA.position
         pos.x += 10
-        var links = [SKSpriteNode]()
+        links = [SKSpriteNode]()
         
         for i in 0..<10 {
             let color = UIColor(hue: 0, saturation: 1, brightness: 1, alpha: 0.3)
@@ -68,6 +75,7 @@ class GameScene: SKScene {
                                                            bodyB: links[i].physicsBody!,
                                                            anchor: boxA.position)
                 physicsWorld.addJoint(pin)
+                pinJoints.append(pin)
                 
             } else {
                 var anchor = links[i].position
@@ -76,20 +84,80 @@ class GameScene: SKScene {
                                                            bodyB: links[i].physicsBody!,
                                                            anchor: anchor)
                 physicsWorld.addJoint(pin)
+                pinJoints.append(pin)
             }
         }
         
         let pin = SKPhysicsJointPin.jointWithBodyA(boxB.physicsBody!,
                                                    bodyB: links.last!.physicsBody!,
                                                    anchor: boxB.position)
+        pinJoints.append(pin)
+        
         physicsWorld.addJoint(pin)
         
     }
     
     
     
+    func removeChain() {
+        if !locked {
+            print("Sorry not pinned! pins already removed")
+            return
+        }
+        
+        locked = false
+        
+        for _ in 0 ..< pinJoints.count {
+            physicsWorld.removeJoint(pinJoints.removeFirst())
+        }
+        
+        for i in 0 ..< links.count {
+            let link = links.removeFirst()
+            link.removeFromParent()
+        }
+    }
+    
+    func addChain() {
+        
+        if locked {
+            print("Sorry already pinned! pins in place")
+            return
+        }
+        
+        locked = true
+        
+        // Save position of boxA and boxB
+        let boxAPos = boxA.position
+        let boxBPos = boxB.position
+        
+        boxA.position.x = 100
+        boxB.position.x = 300
+        
+        boxA.position.y = 30
+        boxB.position.y = 30
+        
+        createChain()
+        
+        // Move boxA to original position
+        boxA.position = boxAPos
+        // Move boxB to original position
+        boxB.position = boxBPos
+    }
+    
+    
+    
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
+        
+        
+        addChild(addChainButton)
+        addChild(removeChainButton)
+        
+        addChainButton.position.x = 50
+        addChainButton.position.y = view.frame.size.height - 50
+        
+        removeChainButton.position.x = view.frame.size.width - 50
+        removeChainButton.position.y = addChainButton.position.y
         
         physicsWorld.gravity = CGVector(dx: 0, dy: -5)
         
@@ -131,7 +199,7 @@ class GameScene: SKScene {
     }
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
-       /* Called when a touch begins */
+        /* Called when a touch begins */
         
         for touch in touches {
             let location = touch.locationInNode(self)
@@ -141,16 +209,25 @@ class GameScene: SKScene {
                 print("Touch!")
                 let vector = CGVector(dx: 0, dy: 8000)
                 node.physicsBody?.applyForce(vector, atPoint: location)
+            } else if node == addChainButton {
+                print("Add Chain !")
+                addChain()
+                
+            } else if node == removeChainButton {
+                print("remove Chain !")
+                removeChain()
+                
             }
         }
     }
-   
+    
     override func update(currentTime: CFTimeInterval) {
         /* Called before each frame is rendered */
         
         
     }
 }
+
 
 
 
